@@ -5,9 +5,16 @@ RabbitMQ de Discordia, en su propia VM.
 
 ## Deploy
 
-Automático: un push a `main` dispara `.github/workflows/deploy.yml`, que
-por SSH hace `git pull && docker compose up -d` en la VM de Oracle. Necesita
-estos secrets configurados en **Settings → Secrets and variables →
+Automático: un push a `main` ejecuta `.github/workflows/ci.yml`, que tiene dos
+jobs encadenados:
+
+1. **`validate`**: comprueba el `docker-compose.yml` y levanta RabbitMQ con
+   `docker compose up --wait`, esperando a que responda su healthcheck. Los
+   pull requests y los push a `develop` corren solo este job.
+2. **`deploy`**: solo si `validate` pasó, hace por SSH `git pull && docker compose up -d`
+   en la VM de Oracle. Si RabbitMQ no levanta, no se despliega.
+
+Necesita estos secrets configurados en **Settings → Secrets and variables →
 Actions** de este repo:
 
 | Secret | Valor |

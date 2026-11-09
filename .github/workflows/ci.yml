@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar docker-compose.yml
+        run: docker compose config --quiet
+      - name: Levantar RabbitMQ y esperar a que responda
+        run: docker compose up -d --wait --wait-timeout 120
+      - name: Bajar RabbitMQ
+        if: always()
+        run: docker compose down -v
+
+  deploy:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-rabbitmq
+      cancel-in-progress: false
+    steps:
+      - name: Deploy a Oracle por SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            cd ~/rabbit-mq
+            git pull
+            docker compose up -d
