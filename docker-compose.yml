@@ -4,6 +4,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     restart: unless-stopped
+    hostname: 66e28dd2e4fa
     ports:
       - "${RABBITMQ_BIND_IP:-0.0.0.0}:5672:5672"
       - "127.0.0.1:15672:15672"
