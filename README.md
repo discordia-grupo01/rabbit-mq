@@ -54,6 +54,14 @@ El despliegue automático hace por SSH `git pull && docker compose up -d` en la 
 | `ORACLE_USER` | Usuario SSH, por ejemplo `ubuntu`. |
 | `ORACLE_SSH_KEY` | Clave privada SSH de despliegue (no tu clave personal). |
 
+#### El hostname del contenedor no se puede cambiar
+
+El `docker-compose.yml` fija `hostname: 66e28dd2e4fa`. No lo quites ni lo cambies. RabbitMQ toma el nombre de su nodo del hostname del contenedor (`rabbit@66e28dd2e4fa`) y guarda sus datos (usuarios, colas, exchanges y mensajes) en una carpeta con ese nombre dentro del volumen. Si el hostname cambia, RabbitMQ arranca con un nodo nuevo, mira una carpeta vacía y no ve nada de lo anterior.
+
+Sin un hostname fijo, Docker le pone al contenedor su ID, y el ID cambia cada vez que Compose recrea el contenedor, por ejemplo al cambiar el `healthcheck` o la imagen. El 15 de noviembre de 2026, un deploy hizo justamente eso: el usuario `discordia` y las colas dejaron de existir para RabbitMQ y los servicios que lo usaban no pudieron conectarse hasta que se volvió a fijar el hostname del nodo anterior.
+
+Si en la VM ves una carpeta `rabbit@<otro id>` dentro de `/var/lib/rabbitmq/mnesia` que no es la del hostname fijado, es de una instalación anterior y no se usa.
+
 ## Variables de entorno
 
 | Variable | Default | Descripción |
